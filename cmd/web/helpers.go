@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
-
 	"github.com/wumbabum/home_assist/internal/version"
 )
 
@@ -15,22 +13,22 @@ func (app *application) newTemplateData(r *http.Request) map[string]any {
 	return data
 }
 
-func (app *application) backgroundTask(r *http.Request, fn func() error) {
-	app.wg.Add(1)
+// func (app *application) backgroundTask(r *http.Request, fn func() error) {
+// 	app.wg.Add(1)
 
-	go func() {
-		defer app.wg.Done()
+// 	go func() {
+// 		defer app.wg.Done()
 
-		defer func() {
-			pv := recover()
-			if pv != nil {
-				app.reportServerError(r, fmt.Errorf("%v", pv))
-			}
-		}()
+// 		defer func() {
+// 			pv := recover()
+// 			if pv != nil {
+// 				app.reportServerError(r, fmt.Errorf("%v", pv))
+// 			}
+// 		}()
 
-		err := fn()
-		if err != nil {
-			app.reportServerError(r, err)
-		}
-	}()
-}
+// 		err := fn()
+// 		if err != nil {
+// 			app.reportServerError(r, err)
+// 		}
+// 	}()
+// }

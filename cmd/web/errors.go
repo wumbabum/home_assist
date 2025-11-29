@@ -30,9 +30,9 @@ func (app *application) notFound(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, message, http.StatusNotFound)
 }
 
-func (app *application) badRequest(w http.ResponseWriter, r *http.Request, err error) {
-	http.Error(w, err.Error(), http.StatusBadRequest)
-}
+// func (app *application) badRequest(w http.ResponseWriter, r *http.Request, err error) {
+// 	http.Error(w, err.Error(), http.StatusBadRequest)
+// }
 
 func (app *application) basicAuthenticationRequired(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("WWW-Authenticate", `Basic realm="restricted", charset="UTF-8"`)
