@@ -1,0 +1,5 @@
+bin/
+tmp/
+tmp.ex
+build-errors.log
+planning/
