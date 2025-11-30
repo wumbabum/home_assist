@@ -6,8 +6,12 @@ import (
 )
 
 func (app *application) newTemplateData(r *http.Request) map[string]any {
+	profile := app.sessionManager.Get(r.Context(), "profile")
+
 	data := map[string]any{
-		"Version": version.Get(),
+		"Version":       version.Get(),
+		"IsAuthenticated": profile != nil,
+		"Profile":         profile,
 	}
 
 	return data
