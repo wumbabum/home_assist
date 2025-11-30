@@ -58,18 +58,20 @@ func (app *application) logAccess(next http.Handler) http.Handler {
 
 func (app *application) requireBasicAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		username, plaintextPassword, ok := r.BasicAuth()
-		if !ok {
-			app.basicAuthenticationRequired(w, r)
-			return
-		}
+		// username, plaintextPassword, ok := r.BasicAuth()
+		// if !ok {
+		// 	app.basicAuthenticationRequired(w, r)
+		// 	return
+		// }
 
-		if app.config.basicAuth.username != username {
-			app.basicAuthenticationRequired(w, r)
-			return
-		}
+		// if app.config.basicAuth.username != username {
+		// 	app.basicAuthenticationRequired(w, r)
+		// 	return
+		// }
 
-		err := bcrypt.CompareHashAndPassword([]byte(app.config.basicAuth.hashedPassword), []byte(plaintextPassword))
+		// err := bcrypt.CompareHashAndPassword([]byte(app.config.basicAuth.hashedPassword), []byte(plaintextPassword))
+		err := errors.New("placeholder error to be removed")
+
 		switch {
 		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
 			app.basicAuthenticationRequired(w, r)

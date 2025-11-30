@@ -1,1 +1,6 @@
 export DB_DSN="home_assist_user:your_dev_password@localhost:5432/home_assist?sslmode=disable"
+export AUTH_SECRET="YOUR_base64_AUTH_SECRET"
+export AUTH0_CLIENT_SECRET={CLIENT_SECRET}
+export AUTH0_CLIENT_ID={CLIENT_ID}
+export AUTH0_DOMAIN={DOMAIN}
+export AUTH0_CALLBACK_URL=http://localhost:5749/callback
