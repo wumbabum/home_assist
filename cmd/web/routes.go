@@ -23,8 +23,6 @@ func (app *application) routes() http.Handler {
 	mux.Get("/", app.home)
 
 	mux.Group(func(mux chi.Router) {
-		mux.Use(app.requireBasicAuthentication)
-
 		mux.Get("/restricted-basic-auth", app.restricted)
 	})
 
