@@ -3,6 +3,8 @@ package database
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/wumbabum/home_assist/assets"
@@ -26,7 +28,16 @@ func New(dsn string) (*DB, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
 
-	db, err := sqlx.ConnectContext(ctx, "postgres", "postgres://"+dsn)
+	// Add postgres:// prefix if not already present
+	connStr := dsn
+	if !strings.HasPrefix(dsn, "postgres://") && !strings.HasPrefix(dsn, "postgresql://") {
+		connStr = "postgres://" + dsn
+	}
+
+	// Debug: print connection string
+	fmt.Printf("DEBUG: Connecting with DSN: %s\n", connStr)
+
+	db, err := sqlx.ConnectContext(ctx, "postgres", connStr)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +56,13 @@ func (db *DB) MigrateUp() error {
 		return err
 	}
 
-	migrator, err := migrate.NewWithSourceInstance("iofs", iofsDriver, "postgres://"+db.dsn)
+	// Add postgres:// prefix if not already present
+	connStr := db.dsn
+	if !strings.HasPrefix(db.dsn, "postgres://") && !strings.HasPrefix(db.dsn, "postgresql://") {
+		connStr = "postgres://" + db.dsn
+	}
+
+	migrator, err := migrate.NewWithSourceInstance("iofs", iofsDriver, connStr)
 	if err != nil {
 		return err
 	}
