@@ -6,6 +6,31 @@ import (
 	"testing"
 )
 
+func TestRequireAuth_NoSession(t *testing.T) {
+	// Test that requireAuth redirects to /login when no session exists
+	app := newTestApplicationWithSession(t)
+
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("handler should not be called when not authenticated")
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
+	w := httptest.NewRecorder()
+
+	// Wrap with session middleware first, then auth
+	handler := app.sessionManager.LoadAndSave(app.requireAuth(testHandler))
+	handler.ServeHTTP(w, req)
+
+	// Should redirect to login
+	if w.Code != http.StatusSeeOther {
+		t.Errorf("expected status %d, got %d", http.StatusSeeOther, w.Code)
+	}
+
+	if location := w.Header().Get("Location"); location != "/login" {
+		t.Errorf("expected redirect to /login, got %s", location)
+	}
+}
+
 func TestRecoverPanic(t *testing.T) {
 	app := newTestApplication(t)
 
