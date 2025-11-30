@@ -16,10 +16,13 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (app *application) restricted(w http.ResponseWriter, r *http.Request) {
-	data := app.newTemplateData(r)
+func (app *application) userProfile(w http.ResponseWriter, r *http.Request) {
+	profile := app.sessionManager.Get(r.Context(), "profile")
 
-	err := response.Page(w, http.StatusOK, data, "pages/restricted.tmpl")
+	data := app.newTemplateData(r)
+	data["Profile"] = profile
+
+	err := response.Page(w, http.StatusOK, data, "pages/user.tmpl")
 	if err != nil {
 		app.serverError(w, r, err)
 	}

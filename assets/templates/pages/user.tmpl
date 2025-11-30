@@ -1,0 +1,10 @@
+{{template "base" .}}
+
+{{define "title"}}User Profile{{end}}
+
+{{define "main"}}
+<h1>User Profile</h1>
+<p>Email: {{.Profile.email}}</p>
+<p>Name: {{.Profile.name}}</p>
+<p><a href="/logout">Logout</a></p>
+{{end}}
