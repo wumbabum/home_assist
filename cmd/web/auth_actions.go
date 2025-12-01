@@ -1,6 +1,8 @@
 package main
 
-import ("net/http")
+import (
+	"net/http"
+)
 
 func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	// Create oidc request and create session state
@@ -29,5 +31,3 @@ func (app *application) logout(w http.ResponseWriter, r *http.Request) {
 	// Stub: redirect to home
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
-
-
