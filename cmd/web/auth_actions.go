@@ -20,8 +20,15 @@ func (app *application) callback(w http.ResponseWriter, r *http.Request) {
 	// TODO: Extract user profile from claims
 	// TODO: Store profile and tokens in session
 
-	// Stub: redirect to home
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	// Stub profile
+	profile := map[string]interface{}{
+		"email": "stub@example.com",
+		"name":  "Stub User",
+	}
+
+	app.sessionManager.Put(r.Context(), "profile", profile)
+	// Stub: redirect to stubbed profile
+	http.Redirect(w, r, "/profile", http.StatusSeeOther)
 }
 
 func (app *application) logout(w http.ResponseWriter, r *http.Request) {
