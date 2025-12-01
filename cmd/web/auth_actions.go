@@ -21,9 +21,10 @@ func (app *application) callback(w http.ResponseWriter, r *http.Request) {
 	// TODO: Store profile and tokens in session
 
 	// Stub profile
-	profile := map[string]interface{}{
-		"email": "stub@example.com",
-		"name":  "Stub User",
+	profile := UserProfile{
+		Sub:   "auth0-stubbed-user-id",
+		Email: "stub@example.com",
+		Name:  "Stub User",
 	}
 
 	app.sessionManager.Put(r.Context(), "profile", profile)

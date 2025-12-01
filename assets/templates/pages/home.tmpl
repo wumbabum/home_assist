@@ -6,8 +6,8 @@
 <h1>Welcome to Home Assist</h1>
 
 {{if .IsAuthenticated}}
-	<p>Hello, {{.Profile.name}}!</p>
-	<p><a href="/user">View Profile</a> | <a href="/logout">Logout</a></p>
+	<p>Hello, {{.Profile.Name}}!</p>
+	<p><a href="/profile">View Profile</a> | <a href="/logout">Logout</a></p>
 {{else}}
 	<p><a href="/login">Login with Auth0</a></p>
 {{end}}

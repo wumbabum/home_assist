@@ -2,14 +2,22 @@ package main
 
 import (
 	"net/http"
+
 	"github.com/wumbabum/home_assist/internal/version"
 )
 
 func (app *application) newTemplateData(r *http.Request) map[string]any {
-	profile := app.sessionManager.Get(r.Context(), "profile")
+	profileData := app.sessionManager.Get(r.Context(), "profile")
+
+	var profile *UserProfile
+	if profileData != nil {
+		if p, ok := profileData.(UserProfile); ok {
+			profile = &p
+		}
+	}
 
 	data := map[string]any{
-		"Version":       version.Get(),
+		"Version":         version.Get(),
 		"IsAuthenticated": profile != nil,
 		"Profile":         profile,
 	}

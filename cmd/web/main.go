@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/gob"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -32,19 +33,19 @@ func main() {
 
 type config struct {
 	auth0 struct {
-    domain       string
-    clientID     string
-    clientSecret string
-    callbackURL  string
+		domain       string
+		clientID     string
+		clientSecret string
+		callbackURL  string
 	}
-	baseURL        string
-	httpPort       int
-	db struct {
-		dsn          string
-		automigrate  bool
+	baseURL  string
+	httpPort int
+	db       struct {
+		dsn         string
+		automigrate bool
 	}
 	session struct {
-		cookieName   string
+		cookieName string
 	}
 }
 
@@ -58,6 +59,10 @@ type application struct {
 }
 
 func run(logger *slog.Logger) error {
+	// Register types for session storage
+	gob.Register(UserProfile{})
+
+	// Configure Environment
 	var cfg config
 
 	cfg.auth0.domain = env.GetString("AUTH0_DOMAIN", "placeholder-domain.auth0.com")
