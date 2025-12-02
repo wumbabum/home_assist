@@ -12,8 +12,10 @@ import (
 
 func (app *application) requireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		profile := app.sessionManager.Get(r.Context(), "profile")
-		if profile == nil {
+		profileRaw := app.sessionManager.Get(r.Context(), "profile")
+		profile, err := profileRaw.(UserProfile)
+
+		if !err || profile.Sub == "" {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
