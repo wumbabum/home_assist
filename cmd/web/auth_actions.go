@@ -61,7 +61,11 @@ func (app *application) callback(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) logout(w http.ResponseWriter, r *http.Request) {
-	app.sessionManager.Destroy(r.Context())
+	err := app.sessionManager.Destroy(r.Context())
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
 	logoutURL := "https://" + app.config.auth0.domain + "/v2/logout?returnTo=" +
 		app.config.baseURL + "&client_id=" + app.config.auth0.clientID
