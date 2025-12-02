@@ -20,8 +20,12 @@ import (
 const defaultTimeout = 3 * time.Second
 
 type DB struct {
-	dsn string
-	*sqlx.DB
+	dsn  string
+	conn interface {
+		sqlx.ExtContext
+		Get(dest interface{}, query string, args ...interface{}) error
+	}
+	db *sqlx.DB // Keep reference for Close() and other DB-specific methods
 }
 
 func New(dsn string) (*DB, error) {
@@ -47,7 +51,7 @@ func New(dsn string) (*DB, error) {
 	db.SetConnMaxIdleTime(5 * time.Minute)
 	db.SetConnMaxLifetime(2 * time.Hour)
 
-	return &DB{dsn: dsn, DB: db}, nil
+	return &DB{dsn: dsn, conn: db, db: db}, nil
 }
 
 func (db *DB) MigrateUp() error {
@@ -68,6 +72,43 @@ func (db *DB) MigrateUp() error {
 	}
 
 	err = migrator.Up()
+	switch {
+	case errors.Is(err, migrate.ErrNoChange):
+		return nil
+	default:
+		return err
+	}
+}
+
+func (db *DB) Close() error {
+	if db.db != nil {
+		return db.db.Close()
+	}
+	return nil
+}
+
+func (db *DB) DB() *sqlx.DB {
+	return db.db
+}
+
+func (db *DB) MigrateDown() error {
+	iofsDriver, err := iofs.New(assets.EmbeddedFiles, "migrations")
+	if err != nil {
+		return err
+	}
+
+	// Add postgres:// prefix if not already present
+	connStr := db.dsn
+	if !strings.HasPrefix(db.dsn, "postgres://") && !strings.HasPrefix(db.dsn, "postgresql://") {
+		connStr = "postgres://" + db.dsn
+	}
+
+	migrator, err := migrate.NewWithSourceInstance("iofs", iofsDriver, connStr)
+	if err != nil {
+		return err
+	}
+
+	err = migrator.Down()
 	switch {
 	case errors.Is(err, migrate.ErrNoChange):
 		return nil

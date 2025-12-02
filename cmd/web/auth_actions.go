@@ -3,13 +3,12 @@ package main
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"net/http"
 )
 
 func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	// Create oidc request and create session state
-
-	// Stub: use fixed state (INSECURE - for testing only)
 	csrfToken, err := csrfToken()
 	if err != nil {
 		app.serverError(w, r, err)
@@ -22,11 +21,6 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) callback(w http.ResponseWriter, r *http.Request) {
-	// TODO: Verify state parameter matches session
-	// TODO: Exchange authorization code for tokens
-	// TODO: Verify ID token
-	// TODO: Extract user profile from claims
-	// TODO: Store profile and tokens in session
 	savedState := app.sessionManager.GetString(r.Context(), "oauth_state")
 	if r.URL.Query().Get("state") != savedState {
 		http.Error(w, "Invalid state parameter", http.StatusBadRequest)
@@ -51,12 +45,32 @@ func (app *application) callback(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, r, err)
 		return
 	}
+	if profile.Sub == "" {
+		app.serverError(w, r, errors.New("missing sub claim in ID token"))
+		return
+	}
 
 	app.logger.Info("auth0 profile data", "profile", profile)
 
+	// Create the session from retrieved profile
+	user, err := app.db.UpsertUser(
+		r.Context(),
+		profile.Sub,
+		profile.Email,
+		profile.Name,
+		profile.Picture,
+	)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
 	app.sessionManager.Put(r.Context(), "access_token", token.AccessToken)
 	app.sessionManager.Put(r.Context(), "profile", profile)
-	// Stub: redirect to stubbed profile
+	app.sessionManager.Put(r.Context(), "user_id", user.ID)
+
+	app.logger.Info("user authenticated", "user_id", user.ID, "auth0_sub", user.Auth0Sub)
+
 	http.Redirect(w, r, "/profile", http.StatusSeeOther)
 }
 
