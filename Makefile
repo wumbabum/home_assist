@@ -25,8 +25,8 @@ audit: test
 
 ## test: run all tests
 .PHONY: test
-test:
-	go test -v -race -buildvcs ./...
+test: test/db/setup
+	gotestsum --format testname -- -race -buildvcs ./...
 
 ## test/cover: run all tests and display coverage
 .PHONY: test/cover

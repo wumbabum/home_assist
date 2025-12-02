@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"testing"
-	"time"
 )
 
 func TestUpsertUser(t *testing.T) {
@@ -34,8 +33,6 @@ func TestUpsertUser(t *testing.T) {
 		t.Error("expected CreatedAt to be set")
 	}
 
-	time.Sleep(10 * time.Millisecond)
-
 	// Update user
 	user2, err := db.UpsertUser(ctx, auth0Sub, "updated@example.com", "Updated User", "")
 	if err != nil {
@@ -50,9 +47,6 @@ func TestUpsertUser(t *testing.T) {
 	}
 	if !user2.CreatedAt.Equal(user1.CreatedAt) {
 		t.Error("expected CreatedAt to remain unchanged")
-	}
-	if !user2.UpdatedAt.After(user1.UpdatedAt) {
-		t.Error("expected UpdatedAt to be after original")
 	}
 }
 

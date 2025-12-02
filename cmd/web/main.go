@@ -107,7 +107,7 @@ func run(logger *slog.Logger) error {
 	}
 
 	sessionManager := scs.New()
-	sessionManager.Store = postgresstore.New(db.DB.DB)
+	sessionManager.Store = postgresstore.New(db.DB().DB)
 	sessionManager.Lifetime = 7 * 24 * time.Hour
 	sessionManager.Cookie.Name = cfg.session.cookieName
 	sessionManager.Cookie.Secure = true

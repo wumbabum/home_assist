@@ -3,6 +3,8 @@ package database
 import (
 	"os"
 	"testing"
+
+	"github.com/jmoiron/sqlx"
 )
 
 func getTestDB(t *testing.T) *DB {
@@ -11,10 +13,17 @@ func getTestDB(t *testing.T) *DB {
 		t.Skip("TEST_DB_DSN not set - run 'make test/db'")
 	}
 
-	db, err := New(dsn)
+	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	return db
+	tx := db.MustBegin()
+	t.Cleanup(func() {
+		tx.Rollback()
+		db.Close()
+	})
+
+	// Wrap the transaction so each test is isolated
+	return &DB{dsn: dsn, conn: tx}
 }

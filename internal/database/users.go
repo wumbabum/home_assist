@@ -28,14 +28,14 @@ func (db *DB) UpsertUser(ctx context.Context, auth0Sub, email, name, picture str
 		RETURNING id, auth0_sub, email, name, picture, created_at, updated_at
 	`
 	var user User
-	err := db.Get(&user, query, auth0Sub, email, name, picture)
+	err := db.conn.Get(&user, query, auth0Sub, email, name, picture)
 	return &user, err
 }
 
 func (db *DB) GetUserBySub(ctx context.Context, auth0Sub string) (*User, error) {
 	query := `SELECT id, auth0_sub, email, name, picture, created_at, updated_at FROM users WHERE auth0_sub = $1`
 	var user User
-	err := db.Get(&user, query, auth0Sub)
+	err := db.conn.Get(&user, query, auth0Sub)
 	if err != nil {
 		return nil, err
 	}
