@@ -75,3 +75,29 @@ func (db *DB) MigrateUp() error {
 		return err
 	}
 }
+
+func (db *DB) MigrateDown() error {
+	iofsDriver, err := iofs.New(assets.EmbeddedFiles, "migrations")
+	if err != nil {
+		return err
+	}
+
+	// Add postgres:// prefix if not already present
+	connStr := db.dsn
+	if !strings.HasPrefix(db.dsn, "postgres://") && !strings.HasPrefix(db.dsn, "postgresql://") {
+		connStr = "postgres://" + db.dsn
+	}
+
+	migrator, err := migrate.NewWithSourceInstance("iofs", iofsDriver, connStr)
+	if err != nil {
+		return err
+	}
+
+	err = migrator.Down()
+	switch {
+	case errors.Is(err, migrate.ErrNoChange):
+		return nil
+	default:
+		return err
+	}
+}

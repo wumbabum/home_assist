@@ -103,3 +103,27 @@ migrations/force:
 migrations/version:
 	go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path=./assets/migrations -database="${DB_DSN}" version
 
+# ==================================================================================== #
+# DATABASE TESTING
+# ==================================================================================== #
+
+## test/db/setup: create and migrate test database
+.PHONY: test/db/setup
+test/db/setup:
+	@echo "Creating test database..."
+	@psql postgres://home_assist_user:dev_password@127.0.0.1:5432/postgres -c "DROP DATABASE IF EXISTS home_assist_test;" 2>/dev/null || true
+	@psql postgres://home_assist_user:dev_password@127.0.0.1:5432/postgres -c "CREATE DATABASE home_assist_test;"
+	@echo "Running migrations..."
+	@TEST_DB_DSN="postgres://home_assist_user:dev_password@127.0.0.1:5432/home_assist_test?sslmode=disable" go run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest -path=./assets/migrations -database="$$TEST_DB_DSN" up
+
+## test/db/teardown: drop test database
+.PHONY: test/db/teardown
+test/db/teardown:
+	@echo "Dropping test database..."
+	@psql postgres://home_assist_user:dev_password@127.0.0.1:5432/postgres -c "DROP DATABASE IF EXISTS home_assist_test;" 2>/dev/null || true
+
+## test/db: run database tests with test database
+.PHONY: test/db
+test/db: test/db/setup
+	@TEST_DB_DSN="postgres://home_assist_user:dev_password@127.0.0.1:5432/home_assist_test?sslmode=disable" go test -v ./internal/database
+	@$(MAKE) test/db/teardown
