@@ -1,9 +1,14 @@
-{{define "page:title"}}Example page{{end}}
+{{template "base" .}}
 
-{{define "page:meta"}}
-<meta name="page" content="home">
-{{end}}
+{{define "page:title"}}Home{{end}}
 
 {{define "page:main"}}
-<p>This is an example page.</p>
+<h1>Welcome to Home Assist</h1>
+
+{{if .IsAuthenticated}}
+	<p>Hello, {{.Profile.Name}}!</p>
+	<p><a href="/profile">View Profile</a> | <a href="/logout">Logout</a></p>
+{{else}}
+	<p><a href="/login">Login with Auth0</a></p>
+{{end}}
 {{end}}

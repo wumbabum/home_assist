@@ -3,3 +3,5 @@ tmp/
 tmp.ex
 build-errors.log
 planning/
+vendor/
+/web

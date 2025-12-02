@@ -20,12 +20,16 @@ func (app *application) routes() http.Handler {
 	fileServer := http.FileServer(http.FS(assets.EmbeddedFiles))
 	mux.Handle("/static/*", fileServer)
 
+	// Public routes
 	mux.Get("/", app.home)
+	mux.Get("/login", app.login)
+	mux.Get("/callback", app.callback)
+	mux.Get("/logout", app.logout)
 
+	// Protected routes
 	mux.Group(func(mux chi.Router) {
-		mux.Use(app.requireBasicAuthentication)
-
-		mux.Get("/restricted-basic-auth", app.restricted)
+		mux.Use(app.requireAuth)
+		mux.Get("/profile", app.userProfile)
 	})
 
 	return mux

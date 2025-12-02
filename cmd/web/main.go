@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/gob"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -9,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/wumbabum/home_assist/internal/authenticator"
 	"github.com/wumbabum/home_assist/internal/database"
 	"github.com/wumbabum/home_assist/internal/env"
 	"github.com/wumbabum/home_assist/internal/version"
@@ -30,13 +32,15 @@ func main() {
 }
 
 type config struct {
-	baseURL   string
-	httpPort  int
-	basicAuth struct {
-		username       string
-		hashedPassword string
+	auth0 struct {
+		domain       string
+		clientID     string
+		clientSecret string
+		callbackURL  string
 	}
-	db struct {
+	baseURL  string
+	httpPort int
+	db       struct {
 		dsn         string
 		automigrate bool
 	}
@@ -46,6 +50,7 @@ type config struct {
 }
 
 type application struct {
+	auth0          *authenticator.Authenticator
 	config         config
 	db             *database.DB
 	logger         *slog.Logger
@@ -54,12 +59,18 @@ type application struct {
 }
 
 func run(logger *slog.Logger) error {
+	// Register types for session storage
+	gob.Register(UserProfile{})
+
+	// Configure Environment
 	var cfg config
 
+	cfg.auth0.domain = env.GetString("AUTH0_DOMAIN", "placeholder-domain.auth0.com")
+	cfg.auth0.clientID = env.GetString("AUTH0_CLIENT_ID", "placeholder-client-id")
+	cfg.auth0.clientSecret = env.GetString("AUTH0_CLIENT_SECRET", "placeholder-client-secret")
+	cfg.auth0.callbackURL = env.GetString("AUTH0_CALLBACK_URL", "http://localhost:5749/callback")
 	cfg.baseURL = env.GetString("BASE_URL", "http://localhost:5749")
 	cfg.httpPort = env.GetInt("HTTP_PORT", 5749)
-	cfg.basicAuth.username = env.GetString("BASIC_AUTH_USERNAME", "admin")
-	cfg.basicAuth.hashedPassword = env.GetString("BASIC_AUTH_HASHED_PASSWORD", "$2a$10$jRb2qniNcoCyQM23T59RfeEQUbgdAXfR6S0scynmKfJa5Gj3arGJa")
 	cfg.db.dsn = env.GetString("DB_DSN", "user:pass@localhost:5432/db")
 	cfg.db.automigrate = env.GetBool("DB_AUTOMIGRATE", true)
 	cfg.session.cookieName = env.GetString("SESSION_COOKIE_NAME", "session_ux762yqp")
@@ -90,6 +101,11 @@ func run(logger *slog.Logger) error {
 		}
 	}
 
+	auth0, err := authenticator.New()
+	if err != nil {
+		return err
+	}
+
 	sessionManager := scs.New()
 	sessionManager.Store = postgresstore.New(db.DB.DB)
 	sessionManager.Lifetime = 7 * 24 * time.Hour
@@ -97,6 +113,7 @@ func run(logger *slog.Logger) error {
 	sessionManager.Cookie.Secure = true
 
 	app := &application{
+		auth0:          auth0,
 		config:         cfg,
 		db:             db,
 		logger:         logger,

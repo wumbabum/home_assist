@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -9,8 +8,18 @@ import (
 	"github.com/wumbabum/home_assist/internal/response"
 
 	"github.com/tomasen/realip"
-	"golang.org/x/crypto/bcrypt"
 )
+
+func (app *application) requireAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		profile := app.sessionManager.Get(r.Context(), "profile")
+		if profile == nil {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
 
 func (app *application) recoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -53,32 +62,5 @@ func (app *application) logAccess(next http.Handler) http.Handler {
 		responseAttrs := slog.Group("response", "status", mw.StatusCode, "size", mw.BytesCount)
 
 		app.logger.Info("access", userAttrs, requestAttrs, responseAttrs)
-	})
-}
-
-func (app *application) requireBasicAuthentication(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		username, plaintextPassword, ok := r.BasicAuth()
-		if !ok {
-			app.basicAuthenticationRequired(w, r)
-			return
-		}
-
-		if app.config.basicAuth.username != username {
-			app.basicAuthenticationRequired(w, r)
-			return
-		}
-
-		err := bcrypt.CompareHashAndPassword([]byte(app.config.basicAuth.hashedPassword), []byte(plaintextPassword))
-		switch {
-		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
-			app.basicAuthenticationRequired(w, r)
-			return
-		case err != nil:
-			app.serverError(w, r, err)
-			return
-		}
-
-		next.ServeHTTP(w, r)
 	})
 }
