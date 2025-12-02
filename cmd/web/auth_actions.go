@@ -58,7 +58,7 @@ func (app *application) callback(w http.ResponseWriter, r *http.Request) {
 		profile.Sub,
 		profile.Email,
 		profile.Name,
-		"", // picture field - add to UserProfile if needed
+		profile.Picture,
 	)
 	if err != nil {
 		app.serverError(w, r, err)

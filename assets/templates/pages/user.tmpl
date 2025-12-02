@@ -4,6 +4,9 @@
 
 {{define "page:main"}}
 <h1>User Profile</h1>
+{{if .Profile.Picture}}
+<img src="{{.Profile.Picture}}" alt="Profile picture" style="width: 100px; height: 100px; border-radius: 50%;">
+{{end}}
 <p>Email: {{.Profile.Email}}</p>
 <p>Name: {{.Profile.Name}}</p>
 <p><a href="/logout">Logout</a></p>
