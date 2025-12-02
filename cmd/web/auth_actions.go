@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"net/http"
 )
 
@@ -8,9 +10,15 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	// Create oidc request and create session state
 
 	// Stub: use fixed state (INSECURE - for testing only)
-	state := "stub-state-replace-later"
+	csrfToken, err := csrfToken()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
-	http.Redirect(w, r, app.auth0.AuthCodeURL(state), http.StatusTemporaryRedirect)
+	app.sessionManager.Put(r.Context(), "oauth_state", csrfToken)
+
+	http.Redirect(w, r, app.auth0.AuthCodeURL(csrfToken), http.StatusTemporaryRedirect)
 }
 
 func (app *application) callback(w http.ResponseWriter, r *http.Request) {
@@ -19,23 +27,53 @@ func (app *application) callback(w http.ResponseWriter, r *http.Request) {
 	// TODO: Verify ID token
 	// TODO: Extract user profile from claims
 	// TODO: Store profile and tokens in session
-
-	// Stub profile
-	profile := UserProfile{
-		Sub:   "auth0-stubbed-user-id",
-		Email: "stub@example.com",
-		Name:  "Stub User",
+	savedState := app.sessionManager.GetString(r.Context(), "oauth_state")
+	if r.URL.Query().Get("state") != savedState {
+		http.Error(w, "Invalid state parameter", http.StatusBadRequest)
+		return
 	}
 
+	token, err := app.auth0.Exchange(r.Context(), r.URL.Query().Get("code"))
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	idToken, err := app.auth0.VerifyIDToken(r.Context(), token)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	var profile UserProfile
+
+	if err := idToken.Claims(&profile); err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	app.logger.Info("auth0 profile data", "profile", profile)
+
+	app.sessionManager.Put(r.Context(), "access_token", token.AccessToken)
 	app.sessionManager.Put(r.Context(), "profile", profile)
 	// Stub: redirect to stubbed profile
 	http.Redirect(w, r, "/profile", http.StatusSeeOther)
 }
 
 func (app *application) logout(w http.ResponseWriter, r *http.Request) {
-	// TODO: Destroy session
-	// TODO: Redirect to Auth0 logout endpoint with returnTo URL
+	app.sessionManager.Destroy(r.Context())
 
-	// Stub: redirect to home
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	logoutURL := "https://" + app.config.auth0.domain + "/v2/logout?returnTo=" +
+		app.config.baseURL + "&client_id=" + app.config.auth0.clientID
+
+	http.Redirect(w, r, logoutURL, http.StatusSeeOther)
+}
+
+func csrfToken() (string, error) {
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(b), nil
 }
