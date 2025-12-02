@@ -668,34 +668,28 @@ Feel free to customize this further as necessary.
 
 Also note: Any messages that are automatically logged by the Go `http.Server` are output at the `Warn` level.
 
-## Using Basic Authentication
+## Authentication
 
-The `cmd/web/middleware.go` file contains a `basicAuth` middleware that you can use to protect your application — or specific application routes — with HTTP basic authentication.
+The application uses Auth0 for authentication via OAuth2/OIDC, enabling secure single sign-on (SSO) with multiple identity providers (Google, GitHub, email/password, etc.).
 
-You can try this out by visiting the [https://localhost:5749/restricted-basic-auth](https://localhost:5749/restricted-basic-auth) endpoint in any web browser and entering the default user name and password:
+### Configuration
 
+Set the following environment variables:
 ```
-User name: admin
-Password:  pa55word
-```
-
-You can change the user name and password by setting the `BASIC_AUTH_USERNAME` environment variable and `BASIC_AUTH_HASHED_PASSWORD` environment variable. For example:
-
-```
-$ export BASIC_AUTH_USERNAME='alice'
-$ export BASIC_AUTH_HASHED_PASSWORD='$2a$10$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-$ go run ./cmd/web
+AUTH0_DOMAIN='your-tenant.us.auth0.com'
+AUTH0_CLIENT_ID='your-client-id'
+AUTH0_CLIENT_SECRET='your-client-secret'
+AUTH0_CALLBACK_URL='http://localhost:5749/callback'
+BASE_URL='http://localhost:5749'
 ```
 
-Note: You will probably need to wrap the username and password in `'` quotes to prevent your shell interpreting dollar and slash symbols as special characters.
+### Auth0 Login
+- Navigate to `/login` to authenticate
+- Protected routes automatically redirect unauthenticated users to login
+- Access user profile at `/profile` after authentication
+- Logout at `/logout`
 
-The value for the `BASIC_AUTH_HASHED_PASSWORD` environment variable should be a bcrypt hash of the password, not the plaintext password itself. An easy way to generate the bcrypt hash for a password is to use the `gophers.dev/cmds/bcrypt-tool` package like so:
-
-```
-$ go run gophers.dev/cmds/bcrypt-tool@latest hash 'your_pa55word'
-```
-
-If you want to change the default values for username and password you can do so by editing the default command-line flag values in the `cmd/web/main.go` file.
+The `requireAuth` middleware in `cmd/web/middleware.go` protects routes requiring authentication.
 
 ## Using sessions
 

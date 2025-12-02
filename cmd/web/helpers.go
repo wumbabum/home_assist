@@ -7,14 +7,7 @@ import (
 )
 
 func (app *application) newTemplateData(r *http.Request) map[string]any {
-	profileData := app.sessionManager.Get(r.Context(), "profile")
-
-	var profile *UserProfile
-	if profileData != nil {
-		if p, ok := profileData.(UserProfile); ok {
-			profile = &p
-		}
-	}
+	profile := app.sessionManager.Get(r.Context(), "profile")
 
 	data := map[string]any{
 		"Version":         version.Get(),

@@ -23,15 +23,8 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) userProfile(w http.ResponseWriter, r *http.Request) {
 	profileData := app.sessionManager.Get(r.Context(), "profile")
-
-	profile, ok := profileData.(UserProfile)
-
+	profile, _ := profileData.(UserProfile)
 	app.logger.Info("profile data", "profile", profile)
-
-	if !ok {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return
-	}
 
 	data := app.newTemplateData(r)
 	data["Profile"] = profile
